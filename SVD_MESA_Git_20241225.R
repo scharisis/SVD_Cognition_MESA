@@ -1,13 +1,3 @@
-library(tidyverse)
-mri6 <- mri6ct
-rm(mri6ct)
-
-
-mrivar <- colnames(mri6 %>% dplyr::select((starts_with("z_") & (ends_with("epvsc")) | "z_pvwml" | "z_otwml" | "z_FA_MUSE_604" |
-                                               "z_TR_MUSE_604" | starts_with("cmb_no_"))))
-
-cogvar <- c("GLOBAL_COG", "MEMORY_IMMED_DOMAIN", "MEMORY_DELAY_DOMAIN", "EXECUTIVE_DOMAIN", "LANG_SEMANTIC_DOMAIN", "PHONEMIC_DOMAIN", "ATTN_PROCESS_DOMAIN", "VISUO_DOMAIN")
-
 # Load required libraries
 libraries <- c(
   'psych',
@@ -572,33 +562,3 @@ lavaan::lavTestLRT(fit1, fit2, method = "satorra.2000")
 #//----------------------------------------------------------------------------END OF SOURCE CODE----------------------------------------------------------------------------//
 
 
-
-
-
-
-
-
-
-
-
-
-
-#//--------------------------------------------ANALYSES 2.5.3: STRUCTURAL EQUATION MODELING--------------------------------------------//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#//--------------------------------------------ANALYSES 2.5.3: STRUCTURAL EQUATION MODELING--------------------------------------------//
