@@ -483,7 +483,7 @@ sem_mod <- function(ind, cor = NULL, out, pred, adj, data, c.int = "montCI", rep
 sem_mod_loop <- function(indicators, cor = NULL, out, pred, adj, data, c.int = "montCI",
                          rep = 5000, r.sq = FALSE, sig = FALSE){
   
-  str_dec <- function(x) {y <- stringr::str_split_1(x, pattern = "(\\W+\\W+\\W+|\\W+\\W+|\\W+\\W+|\\W+)")
+  str_dec <- function(x) {y <- stringr::str_split_1(x, pattern = "(\\W+\\W+\\W+|\\W+\\W+|\\W+)")
   z <- stringr::str_subset(y, pattern = "(\\w+)")
   return(z)}
   
