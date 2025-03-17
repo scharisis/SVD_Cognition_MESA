@@ -556,8 +556,33 @@ model2 <- paste0(
 fit2 <- lavaan::sem(model2, data = mri6, estimator = "ML", group = "site6c", test = "scaled.shifted", se = "robust.sem")
 summary(fit2, standardized = TRUE, fit.measures = TRUE, rsquare = TRUE)
 
+# Equal inter-site/scanner reliability model
+model3 <- paste0(
+  '# latent variable, measurement model
+   svd =~ NA*lbg*z_bgepvsc + lth*z_thepvsc + lpv*z_pvwml + lot*z_otwml + lfa*z_FA_MUSE_604 + ltr*z_TR_MUSE_604
+   
+   # variances
+   svd ~~ c(1, 1, 1, 1, 1, 1)*svd
+   
+   # residual variances
+   z_bgepvsc ~~ rbg*z_bgepvsc
+   z_thepvsc ~~ rth*z_thepvsc
+   z_pvwml ~~ rpv*z_pvwml
+   z_otwml ~~ rot*z_otwml
+   z_FA_MUSE_604 ~~ rfa*z_FA_MUSE_604
+   z_TR_MUSE_604 ~~ rtr*z_TR_MUSE_604
+
+   # residual covariances
+   z_pvwml ~~ z_otwml
+   z_bgepvsc ~~ z_thepvsc
+   z_FA_MUSE_604 ~~ z_TR_MUSE_604')
+
+# Compute MGCFA model with mean-and-variance corrected chi-square (simple second-order correction) and robust standard errors
+fit3 <- lavaan::sem(model3, data = mri6, estimator = "ML", group = "site6c", test = "scaled.shifted", se = "robust.sem")
+summary(fit3, standardized = TRUE, fit.measures = TRUE, rsquare = TRUE)
+
 # Likelihood ratio test with a scaled chi-square difference test statistic
-lavaan::lavTestLRT(fit1, fit2, method = "satorra.2000")
+lavaan::lavTestLRT(fit1, fit2, fit3, method = "satorra.2000")
 
 #//----------------------------------------------------------------------------END OF SOURCE CODE----------------------------------------------------------------------------//
 
