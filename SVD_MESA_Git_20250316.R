@@ -414,7 +414,7 @@ plot(plt)
   # We include option for inclusion of R-Square of the dependent variable (i.e., global cognitive score)
 sem_mod <- function(ind, cor = NULL, out, pred, adj, data, c.int = "montCI", rep = 5000, perc = FALSE, r.sq = FALSE, sig = FALSE) {
   
-  str_dec <- function(x) {y <- stringr::str_split_1(x, pattern = "(\\W+\\W+\\W+|\\W+\\W+|\\W+\\W+|\\W+)")
+  str_dec <- function(x) {y <- stringr::str_split_1(x, pattern = "(\\W+\\W+\\W+|\\W+\\W+|\\W+)")
   z <- stringr::str_subset(y, pattern = "(\\w+)")
   return(z)}
   
