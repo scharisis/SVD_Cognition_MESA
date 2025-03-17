@@ -24,12 +24,12 @@ rm(list = c("libraries", "p"))
 # cogvar = cognitive score variable vector
 # dtabs = time interval between MRI scan and cognitive assessment
 # dtord = order of MRI scan and cognitive assessment completion
-# z_bgepvsc = basal ganglia ePVS count
-# z_thepvsc = thalamus ePVS count
+# z_bgpvsc = basal ganglia PVS count
+# z_thpvsc = thalamus PVS count
 # z_pvwml = periventricular WMH volume
 # z_otwml = subcortical WMH volume
-# z_FA_MUSE_604 = white matter fractional anisotropy
-# z_TR_MUSE_604 = white matter trace
+# z_FA_MUSE_604 = mean white matter fractional anisotropy
+# z_TR_MUSE_604 = mean white matter trace
 # z_MUSE_601 = total gray matter volume
 # z_MUSE_702 = total intracranial volume
 # GLOBAL_COG = global cognitive score
@@ -77,7 +77,7 @@ ggplot(mapping = aes(y = vss$map, x = c(1:length(vss$map)))) + theme_linedraw() 
 
 # Create a function that runs an EFA on the correlation matrix iteratively, removing the item with the lowest communality from the matrix at each iteration, until all remaining items have communalities >=0.2
 # The function saves the final solution and also calculates and saves factor scores
-# We also add the option for extension analysis
+# We also include the option for extension analysis
 efa_fun <- function(var, data, factors, rotation = "oblimin", fm = "minres", scores = "regression",
                     com = 0.2, ext = FALSE, ext.proc = "D"){
   var_red <- var
@@ -122,18 +122,18 @@ efa_fun <- function(var, data, factors, rotation = "oblimin", fm = "minres", sco
 efa_fun(var = mrivar, data = mri6, factors = 2, rotation = "oblimin",
         fm = "minres", scores = "regression", com = 0.2)
 
-# Print EFA solution with Oblimin rotation
+# Print EFA solution with oblimin rotation
 print(mget(ls(pattern = "fac_mrivar")))
 
 fac_mrivar$Phi # interfactor correlation matrix
 
-# Run function for all SVD marker variables with Varimax rotation 
+# Run function for all SVD marker variables with varimax rotation 
 # Also perform extension analysis using the Dwyer's factor extension method
 efa_fun(var = mrivar, data = mri6, factors = 2, rotation = "varimax",
         fm = "minres", ext = TRUE, scores = "regression",
         ext.proc = "D")
 
-# Print EFA solution with Varimax rotation
+# Print EFA solution with varimax rotation
 print(mget(ls(pattern = "fac_mrivar")))
 
 # Print results of extension analysis
@@ -183,7 +183,7 @@ glm_mod_loop <- function(out, pred, adj = NULL, data, p.adj = FALSE, c.int = FAL
     cat("\n> Analysis ", j, " of ", length(out), " <", "\nOutcome: ", out[j], "\n")
     glm_mod(outc = paste0(out[j]), pred = pred, adj = adj, data = data, p.adj = p.adj, c.int = c.int)
     if(all(paste0("glm_mod_", out) %in% ls(pattern = paste(out, collapse = "|"), envir = globalenv()))){
-      glmres <- do.call(bind_rows, mget(paste0("glm_mod_", out), envir = globalenv()))# row_wise binding of results once analyses for all thresholds completed
+      glmres <- do.call(bind_rows, mget(paste0("glm_mod_", out), envir = globalenv()))
       assign("glmres", glmres, envir = globalenv())
       rm(list = ls(pattern = paste(paste0("glm_mod_", out), collapse = "|"), envir = globalenv()), envir = globalenv())
     }}}
@@ -195,13 +195,13 @@ glm_mod_loop(out = cogvar, pred = c("MR1_r", "MR2_r"), p.adj = TRUE, c.int = TRU
 # Measurement model of SVD
 model <- paste0(
   '# latent variable, measurement model
-   svd =~ NA*z_bgepvsc + z_thepvsc + z_pvwml + z_otwml + z_FA_MUSE_604 + z_TR_MUSE_604
+   svd =~ NA*z_bgpvsc + z_thpvsc + z_pvwml + z_otwml + z_FA_MUSE_604 + z_TR_MUSE_604
    
    # variances
    svd ~~ 1*svd
    
    # residual covariances
-   z_bgepvsc ~~ z_thepvsc
+   z_bgpvsc ~~ z_thpvsc
    z_pvwml ~~ z_otwml
    z_FA_MUSE_604 ~~ z_TR_MUSE_604')
 
@@ -221,13 +221,13 @@ modindices(fit, sort. = TRUE, standardized = TRUE) # sorted (from largest to sma
 # SEM model and Path diagram with SVD latent variable and gray matter volume as mediators in the relationship of age with global cognition
 model <- paste0(
   '# latent variable, measurement model
-   svd =~ NA*z_bgepvsc + z_thepvsc + z_pvwml + z_otwml + z_FA_MUSE_604 + z_TR_MUSE_604
+   svd =~ NA*z_bgpvsc + z_thpvsc + z_pvwml + z_otwml + z_FA_MUSE_604 + z_TR_MUSE_604
    
    # variances
    svd ~~ 1*svd
    
    # residual covariances
-   z_bgepvsc ~~ z_thepvsc
+   z_bgpvsc ~~ z_thpvsc
    z_pvwml ~~ z_otwml
    z_FA_MUSE_604 ~~ z_TR_MUSE_604
    
@@ -268,7 +268,7 @@ fit <- lavaan::sem(model, data = mri6, std.lv = TRUE, estimator = "ML", test = "
                    se = "bootstrap", bootstrap = 5000, parallel = "snow",
                    ncpus = (parallel::detectCores() -1), iseed = 2023)
 
-# Bootstrap bias-corrected 95% CIs for direct, indirect and total effects
+# Bootstrap bias-corrected 95% CIs for direct, indirect, and total effects
 boot_ci <- lavaan::parameterEstimates(fit, ci = TRUE, boot.ci.type = "bca.simple",
                                       level = 0.95, standardized = TRUE)
 boot_ci[boot_ci$op == ":=", c("lhs", "est", "pvalue", "ci.lower", "ci.upper")]
@@ -295,8 +295,8 @@ plt <- semptools::set_edge_label_position(plt, c("z_MUSE_601 ~ svd" = 0.2))
 
 plt <- semptools::change_node_label(plt,
                          c(svd = "SVD",
-                           z_b = "Basal\nganglia\nePVS",
-                           z_th = "Thalamus\nePVS",
+                           z_b = "Basal\nganglia\nPVS",
+                           z_th = "Thalamus\nPVS",
                            z_p = "Perive-\nntricular\nWMH",
                            z_tw = "Subco-\nrtical\nWMH",
                            z_F = "WM\nFractional\nAnisotropy",
@@ -317,13 +317,13 @@ plot(plt)
 # SEM model and Path diagram with SVD latent variable and gray matter volume as mediators in the relationship of FRS with global cognition
 model <- paste0(
   '# latent variable, measurement model
-   svd =~ NA*z_bgepvsc + z_thepvsc + z_pvwml + z_otwml + z_FA_MUSE_604 + z_TR_MUSE_604
+   svd =~ NA*z_bgpvsc + z_thpvsc + z_pvwml + z_otwml + z_FA_MUSE_604 + z_TR_MUSE_604
    
    # variances
    svd ~~ 1*svd
    
    # residual covariances
-   z_bgepvsc ~~ z_thepvsc
+   z_bgpvsc ~~ z_thpvsc
    z_pvwml ~~ z_otwml
    z_FA_MUSE_604 ~~ z_TR_MUSE_604
 
@@ -363,7 +363,7 @@ fit <- lavaan::sem(model, data = mri6, std.lv = TRUE, estimator = "ML", test = "
                    se = "bootstrap", bootstrap = 5000, parallel = "snow",
                    ncpus = (parallel::detectCores() -1), iseed = 2023)
 
-# Bootstrap bias-corrected 95% CIs for direct, indirect and total effects
+# Bootstrap bias-corrected 95% CIs for direct, indirect, and total effects
 boot_ci <- lavaan::parameterEstimates(fit, ci = TRUE, boot.ci.type = "bca.simple",
                                       level = 0.95, standardized = TRUE)
 boot_ci[boot_ci$op == ":=", c("lhs", "est", "pvalue", "ci.lower", "ci.upper")]
@@ -390,8 +390,8 @@ plt <- semptools::set_edge_label_position(plt, c("z_MUSE_601 ~ svd" = 0.2))
 
 plt <- semptools::change_node_label(plt,
                          c(svd = "SVD",
-                           z_b = "Basal\nganglia\nePVS",
-                           z_th = "Thalamus\nePVS",
+                           z_b = "Basal\nganglia\nPVS",
+                           z_th = "Thalamus\nPVS",
                            z_p = "Perive-\nntricular\nWMH",
                            z_tw = "Subco-\nrtical\nWMH",
                            z_F = "WM\nFractional\nAnisotropy",
@@ -409,7 +409,7 @@ plt$graphAttributes$Edges$label.margin <- c(0, 0, 0, 0, 0, 0, -0.02, -0.02, -0.0
 
 plot(plt)
 
-# Create function that recomputes the structural part of SEM while substituting the latent SVD variable with each of its individual indicators
+# Create a function that recomputes the structural part of SEM while substituting the latent SVD variable with each of its individual indicators
   # We include options for both bootstrap as well as Monte Carlo-derived confidence intervals (for faster computation)
   # We include option for inclusion of R-Square of the dependent variable (i.e., global cognitive score)
 sem_mod <- function(ind, cor = NULL, out, pred, adj, data, c.int = "montCI", rep = 5000, perc = FALSE, r.sq = FALSE, sig = FALSE) {
@@ -499,24 +499,24 @@ sem_mod_loop <- function(indicators, cor = NULL, out, pred, adj, data, c.int = "
       rm(list = ls(pattern = paste(out), envir = globalenv()), envir = globalenv())
     }}}
 
-ind1 <- "z_bgepvsc"
-ind2 <- "z_thepvsc"
+ind1 <- "z_bgpvsc"
+ind2 <- "z_thpvsc"
 ind3 <- "z_pvwml"
 ind4 <- "z_otwml"
 ind5 <- "z_FA_MUSE_604"
 ind6 <- "z_TR_MUSE_604"
-ind7 <- "z_bgepvsc + z_thepvsc + z_pvwml + z_otwml + z_FA_MUSE_604 + z_TR_MUSE_604"
+ind7 <- "z_bgpvsc + z_thpvsc + z_pvwml + z_otwml + z_FA_MUSE_604 + z_TR_MUSE_604"
 
-# Run function with Age as the independent variable
+# Run function with age as the independent variable
 sem_mod_loop(indicators = c(ind1, ind2, ind3, ind4, ind5, ind6, ind7),
-             cor = c("z_bgepvsc ~~ z_thepvsc", "z_pvwml ~~ z_otwml", "z_FA_MUSE_604 ~~ z_TR_MUSE_604"),
+             cor = c("z_bgpvsc ~~ z_thpvsc", "z_pvwml ~~ z_otwml", "z_FA_MUSE_604 ~~ z_TR_MUSE_604"),
              out = 'GLOBAL_COG', pred = 'AGE',
              adj = c("SEX_M", "z_MUSE_702", site, race, edu),
              data = mri6, c.int = "boot", rep = 5000, r.sq = TRUE, sig = TRUE)   
 
 # Run function with FRS as the independent variable
 sem_mod_loop(indicators = c(ind1, ind2, ind3, ind4, ind5, ind6, ind7),
-             cor = c("z_bgepvsc ~~ z_thepvsc", "z_pvwml ~~ z_otwml", "z_FA_MUSE_604 ~~ z_TR_MUSE_604"),
+             cor = c("z_bgpvsc ~~ z_thpvsc", "z_pvwml ~~ z_otwml", "z_FA_MUSE_604 ~~ z_TR_MUSE_604"),
              out = 'GLOBAL_COG', pred = 'frci086c',
              adj = c("z_MUSE_702", site, race, edu),
              data = mri6ct, c.int = "boot", rep = 5000, r.sq = TRUE, sig = TRUE)  
@@ -525,14 +525,14 @@ sem_mod_loop(indicators = c(ind1, ind2, ind3, ind4, ind5, ind6, ind7),
 # Configural invariance model
 model1 <- paste0(
   '# latent variable, measurement model
-   svd =~ NA*z_bgepvsc + z_thepvsc + z_pvwml + z_otwml + z_FA_MUSE_604 + z_TR_MUSE_604
+   svd =~ NA*z_bgpvsc + z_thpvsc + z_pvwml + z_otwml + z_FA_MUSE_604 + z_TR_MUSE_604
    
    # variances
    svd ~~ 1*svd
 
    # residual covariances
    z_pvwml ~~ z_otwml
-   z_bgepvsc ~~ z_thepvsc
+   z_bgpvsc ~~ z_thpvsc
    z_FA_MUSE_604 ~~ z_TR_MUSE_604')
 
 # Compute MGCFA model with mean-and-variance corrected chi-square (simple second-order correction) and robust standard errors
@@ -542,14 +542,14 @@ summary(fit1, standardized = TRUE, fit.measures = TRUE, rsquare = TRUE)
 # Metric invariance model
 model2 <- paste0(
   '# latent variable, measurement model
-   svd =~ NA*lbg*z_bgepvsc + lth*z_thepvsc + lpv*z_pvwml + lot*z_otwml + lfa*z_FA_MUSE_604 + ltr*z_TR_MUSE_604
+   svd =~ NA*lbg*z_bgpvsc + lth*z_thpvsc + lpv*z_pvwml + lot*z_otwml + lfa*z_FA_MUSE_604 + ltr*z_TR_MUSE_604
    
    # variances
    svd ~~ c(1, NA, NA, NA, NA, NA)*svd
 
    # residual covariances
    z_pvwml ~~ z_otwml
-   z_bgepvsc ~~ z_thepvsc
+   z_bgpvsc ~~ z_thpvsc
    z_FA_MUSE_604 ~~ z_TR_MUSE_604')
 
 # Compute MGCFA model with mean-and-variance corrected chi-square (simple second-order correction) and robust standard errors
@@ -559,14 +559,14 @@ summary(fit2, standardized = TRUE, fit.measures = TRUE, rsquare = TRUE)
 # Equal inter-site/scanner reliability model
 model3 <- paste0(
   '# latent variable, measurement model
-   svd =~ NA*lbg*z_bgepvsc + lth*z_thepvsc + lpv*z_pvwml + lot*z_otwml + lfa*z_FA_MUSE_604 + ltr*z_TR_MUSE_604
+   svd =~ NA*lbg*z_bgpvsc + lth*z_thpvsc + lpv*z_pvwml + lot*z_otwml + lfa*z_FA_MUSE_604 + ltr*z_TR_MUSE_604
    
    # variances
    svd ~~ c(1, 1, 1, 1, 1, 1)*svd
    
    # residual variances
-   z_bgepvsc ~~ rbg*z_bgepvsc
-   z_thepvsc ~~ rth*z_thepvsc
+   z_bgpvsc ~~ rbg*z_bgpvsc
+   z_thpvsc ~~ rth*z_thpvsc
    z_pvwml ~~ rpv*z_pvwml
    z_otwml ~~ rot*z_otwml
    z_FA_MUSE_604 ~~ rfa*z_FA_MUSE_604
@@ -574,7 +574,7 @@ model3 <- paste0(
 
    # residual covariances
    z_pvwml ~~ z_otwml
-   z_bgepvsc ~~ z_thepvsc
+   z_bgpvsc ~~ z_thpvsc
    z_FA_MUSE_604 ~~ z_TR_MUSE_604')
 
 # Compute MGCFA model with mean-and-variance corrected chi-square (simple second-order correction) and robust standard errors
