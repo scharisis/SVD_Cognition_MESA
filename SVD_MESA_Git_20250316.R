@@ -562,7 +562,7 @@ model3 <- paste0(
    svd =~ NA*lbg*z_bgpvsc + lth*z_thpvsc + lpv*z_pvwml + lot*z_otwml + lfa*z_FA_MUSE_604 + ltr*z_TR_MUSE_604
    
    # variances
-   svd ~~ c(1, 1, 1, 1, 1, 1)*svd
+   svd ~~ 1*svd
    
    # residual variances
    z_bgpvsc ~~ rbg*z_bgpvsc
